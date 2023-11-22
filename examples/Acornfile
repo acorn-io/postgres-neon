@@ -1,0 +1,16 @@
+services: db: image: "ghcr.io/lucj/acorn-neon:v#.#-#"
+
+containers: app: {
+	build: {
+		context: "."
+		target:  "dev"
+	}
+	consumes: ["db"]
+	ports: publish: "8000/http"
+	env: {
+		POSTGRES_HOST:     "@{service.db.address}"
+		POSTGRES_DB:       "@{service.db.data.dbName}"
+		POSTGRES_USER:     "@{service.db.secrets.user.username}"
+		POSTGRES_PASSWORD: "@{service.db.secrets.user.password}"
+	}
+}

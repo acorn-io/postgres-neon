@@ -1,0 +1,120 @@
+name:        "Neon Postgres"
+description: "Acorn providing Neon Serverless Postgres"
+readme:      "./README.md"
+info:        localData.info
+icon:        "./icon.png"
+
+args: {
+  // Project name
+	projectName: "myproject"
+
+	// AWS region
+	region: "aws-us-east-1"
+
+	// Postgres version
+	dbVersion: "15"
+
+	// Do not launch the credential helper, use external credentials
+	useExternalCreds: false
+}
+
+if !args.useExternalCreds {
+	acorns: "cred-helper": {
+		image: "ghcr.io/acorn-io/secret-create-helper:v0.#.#-#"
+		deployArgs: {
+			secretKeys:   "api_key"
+			instructions: localData.credInfo
+		}
+	}
+}
+
+services: neon: generated: job: "create-db"
+
+jobs: "create-db": {
+	build: context: "."
+	env: {
+		ACORN_EXTERNAL_ID:   "@{acorn.externalID}"
+		NEON_API_KEY:        "secret://neon-creds/api_key"
+		PROJECT_NAME:        args.projectName
+		REGION:              args.region
+		DB_VERSION:          args.dbVersion
+		DB_NAME:             args.dbName
+	}
+	events: ["create"]
+}
+
+jobs: "delete-db": {
+	build: {
+		context: "."
+		buildArgs: {
+			action: "delete"
+		}
+	}
+	env: {
+		ACORN_EXTERNAL_ID:   "@{acorn.externalID}"
+		NEON_API_KEY:        "secret://neon-creds/api_key"
+		PROJECT_NAME:        args.projectName
+		CREATED_PROJECT:     "secret://state/created_project"
+	}
+	events: ["delete"]
+}
+
+secrets: {
+	user: {
+		name: "user credentials"
+    type: "generated"
+    params: job: "create-db"
+  }
+}
+
+secrets: {
+  "state": {
+    type: "generated"
+    params: job: "create-db"
+  }
+}
+
+if args.useExternalCreds {
+	secrets: {
+		"neon-creds": {
+			external: "neon-creds"
+			type:     "opaque"
+			data: {
+				api_key:  "NEON_API_KEY"
+			}
+		}
+	}
+} else {
+	secrets: {
+		"neon-creds": {
+			neon: "cred-helper.output"
+		}
+	}
+}
+
+localData: info: """
+	## Usage
+
+	services: db: {
+		image: "ghcr.io/acorn-io/neon:v#.#-#"
+	}
+
+	containers: app: {
+		image: "app-image"
+		env: {
+		  DB_HOST:  "@{@{service.}db.address}"
+		  DB_PORT:  "@{@{service.}db.port.5432}"
+		  DB_USER:  "@{@{service.}db.secrets.user.username}"
+		  DB_PASS:  "@{@{service.}db.secrets.user.password}"
+		}
+	}
+	"""
+
+localData: credInfo: """
+    ## Neon Prostgres Setup Instructions
+       	
+    To use this service, you need to supply Neon credentials. 
+    We will need the *API Private key*
+        
+    You will need to <a href="https://neon.tech" target="_blank">create an Neon account</a> to obtain this value. 
+    """
