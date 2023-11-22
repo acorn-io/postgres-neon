@@ -38,7 +38,6 @@ jobs: "create-db": {
 		PROJECT_NAME:        args.projectName
 		REGION:              args.region
 		DB_VERSION:          args.dbVersion
-		DB_NAME:             args.dbName
 	}
 	events: ["create"]
 }
