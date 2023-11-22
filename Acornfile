@@ -15,7 +15,7 @@ args: {
 	dbVersion: "15"
 
 	// Do not launch the credential helper, use external credentials
-	useExternalCreds: false
+	useExternalCreds: true
 }
 
 if !args.useExternalCreds {
@@ -86,7 +86,7 @@ if args.useExternalCreds {
 } else {
 	secrets: {
 		"neon-creds": {
-			neon: "cred-helper.output"
+			alias: "cred-helper.output"
 		}
 	}
 }

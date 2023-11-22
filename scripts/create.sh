@@ -72,7 +72,7 @@ while true; do
     fi
 done
 
-cat > /tmp/run/secrets/output<<EOF
+cat > /run/secrets/output<<EOF
 services: neon: {
   address: "$host"
   secrets: ["user"]
