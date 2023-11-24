@@ -1,4 +1,4 @@
-services: db: image: "ghcr.io/lucj/acorn-neon:v#.#-#"
+services: db: image: "ghcr.io/lucj/acorn-neon:v#-#"
 
 containers: app: {
 	build: {

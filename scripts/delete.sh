@@ -9,6 +9,9 @@ if [ "${ACORN_EVENT}" != "delete" ]; then
    exit 0
 fi
 
+# Neon API URL
+BASE_URL="https://console.neon.tech/api/v2"
+
 # Make sure a project with the name provided exists
 project=$(curl -s "$BASE_URL/projects" \
  -H "Accept: application/json" \
@@ -20,19 +23,20 @@ project=$(curl -s "$BASE_URL/projects" \
   end
 ')
 if [ "$project" = "" ]; then
-  echo "project ${PROJECT_NAME} does not exists" | tee /dev/termination-log
+  echo "project ${PROJECT_NAME} does not exist" | tee /dev/termination-log
   exit 1
 fi 
 echo "project ${PROJECT_NAME} exists"
 
 # Get project identifier
 project_id=$(echo $project | jq -r '.id')
+echo "Project identifier is [$project_id]"
 
 # Delete the project is the one created by this service
 if [ "$project_id" != "${CREATED_PROJECT}" ]; then
   echo "project not created by the service => will not be deleted"
 else
-  echo "about to delete project ${PROJECT_NAME}"
+  echo "project was created by the service => will be deleted"
   res=$(curl -s -XDELETE "$BASE_URL/projects/$project_id" \
   -H "Accept: application/json" \
   -H "Authorization: Bearer $NEON_API_KEY" | jq)

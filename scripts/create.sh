@@ -81,14 +81,17 @@ services: neon: {
     dbName: "$db"
   }
 }
-secret: user: {
-  data:
-    username: $user
-    password: $pass
-}
-secret: state: {
-  data: {
-    created_project: $project_id
+secrets: {
+  user: {
+    data: {
+      username: "$user"
+      password: "$pass"
+    }
+  }
+  state: {
+    data: {
+      created_project: "$project_id"
+    }
   }
 }
 EOF

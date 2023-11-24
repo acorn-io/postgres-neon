@@ -5,7 +5,7 @@ info:        localData.info
 icon:        "./icon.png"
 
 args: {
-  // Project name
+	// Project name
 	projectName: "myproject"
 
 	// AWS region
@@ -33,11 +33,11 @@ services: neon: generated: job: "create-db"
 jobs: "create-db": {
 	build: context: "."
 	env: {
-		ACORN_EXTERNAL_ID:   "@{acorn.externalID}"
-		NEON_API_KEY:        "secret://neon-creds/api_key"
-		PROJECT_NAME:        args.projectName
-		REGION:              args.region
-		DB_VERSION:          args.dbVersion
+		ACORN_EXTERNAL_ID: "@{acorn.externalID}"
+		NEON_API_KEY:      "secret://neon-creds/api_key"
+		PROJECT_NAME:      args.projectName
+		REGION:            args.region
+		DB_VERSION:        args.dbVersion
 	}
 	events: ["create"]
 }
@@ -50,27 +50,23 @@ jobs: "delete-db": {
 		}
 	}
 	env: {
-		ACORN_EXTERNAL_ID:   "@{acorn.externalID}"
-		NEON_API_KEY:        "secret://neon-creds/api_key"
-		PROJECT_NAME:        args.projectName
-		CREATED_PROJECT:     "secret://state/created_project"
+		ACORN_EXTERNAL_ID: "@{acorn.externalID}"
+		NEON_API_KEY:      "secret://neon-creds/api_key"
+		PROJECT_NAME:      args.projectName
+		CREATED_PROJECT:   "secret://state/created_project"
 	}
 	events: ["delete"]
 }
 
 secrets: {
-	user: {
-		name: "user credentials"
-    type: "generated"
-    params: job: "create-db"
-  }
-}
-
-secrets: {
-  "state": {
-    type: "generated"
-    params: job: "create-db"
-  }
+	"user": {
+		type: "generated"
+		params: job: "create-db"
+	}
+	"state": {
+		type: "generated"
+		params: job: "create-db"
+	}
 }
 
 if args.useExternalCreds {
@@ -79,7 +75,7 @@ if args.useExternalCreds {
 			external: "neon-creds"
 			type:     "opaque"
 			data: {
-				api_key:  "NEON_API_KEY"
+				api_key: "NEON_API_KEY"
 			}
 		}
 	}
