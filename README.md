@@ -19,29 +19,25 @@ The [examples folder](./examples) contains a sample application using this Servi
 To use the Postgres Neon Service, we first define a *service* property in the Acornfile of the application:
 
 ```
-services: db: {
-  image: "ghcr.io/acorn-io/neon:v#-#"
-}
+services: db: image: "ghcr.io/lucj/postgres-neon:v#-#"
 ```
 
 Next we define the application container. This one can connect to the Postfgres Neon service via environment variables which values are set based on the service's properties.
 
 ```
-containers: {
-  app: {
-    build: {
-   context: "."
-   target:  "dev"
-  }
-    consumes: ["db"]
-    ports: publish: "8000/http"
-    env: {
-      DB_HOST:  "@{service.db.address}"
-      DB_NAME:  "@{service.db.data.dbName}"
-      DB_USER:  "@{service.db.secrets.user.username}"
-      DB_PASS:  "@{service.db.secrets.user.password}"
-    }
-  }
+containers: app: {
+	build: {
+		context: "."
+		target:  "dev"
+	}
+	consumes: ["db"]
+	ports: publish: "8000/http"
+	env: {
+		POSTGRES_HOST:     "@{service.db.address}"
+		POSTGRES_DB:       "@{service.db.data.dbName}"
+		POSTGRES_USER:     "@{service.db.secrets.user.username}"
+		POSTGRES_PASSWORD: "@{service.db.secrets.user.password}"
+	}
 }
 ```
 
@@ -59,7 +55,7 @@ After a few tens of seconds an http endpoint will be returned. Using this endpoi
 
 Instead of managing your own Acorn installation, you can deploy this application in the Acorn Sandbox, the free SaaS offering provided by Acorn. Access to the sandbox requires only a GitHub account, which is used for authentication.
 
-[![Run in Acorn](https://acorn.io/v1-ui/run/badge?image=ghcr.io+acorn-io+postgres-neon+examples:v%23-%23)](https://acorn.io/run/ghcr.io/acorn-io/postgres-neon/examples:v%23-%23)
+[![Run in Acorn](https://acorn.io/v1-ui/run/badge?image=ghcr.io+lucj+postgres-neon+examples:v%23-%23)](https://acorn.io/run/ghcr.io/lucj/postgres-neon/examples:v%23-%23)
 
 An application running in the Sandbox will automatically shut down after 2 hours, but you can use the Acorn Pro plan to remove the time limit and gain additional functionalities.
 
