@@ -8,11 +8,11 @@ args: {
 	// Project name
 	projectName: "myproject"
 
+	// Database name
+	dbName: "mydb"
+
 	// AWS region
 	region: "aws-us-east-1"
-
-	// Postgres version
-	dbVersion: "15"
 }
 
 services: neon: generated: job: "create-db"
@@ -23,11 +23,28 @@ jobs: "create-db": {
 		ACORN_EXTERNAL_ID: "@{acorn.externalID}"
 		NEON_API_KEY:      "secret://neon-creds/api_key"
 		PROJECT_NAME:      args.projectName
+		DB_NAME:           args.dbName
 		REGION:            args.region
-		DB_VERSION:        args.dbVersion
 	}
 	events: ["create"]
 }
+
+//jobs: "update-db": {
+//	build: {
+//		context: "."
+//		buildArgs: {
+//			action: "update"
+//		}
+//	}
+//	env: {
+//		ACORN_EXTERNAL_ID: "@{acorn.externalID}"
+//		NEON_API_KEY:      "secret://neon-creds/api_key"
+//		PROJECT_NAME:      args.projectName
+//		DB_NAME:           args.dbName
+//		REGION:            args.region
+//	}
+//	events: ["update"]
+//}
 
 jobs: "delete-db": {
 	build: {
@@ -40,7 +57,10 @@ jobs: "delete-db": {
 		ACORN_EXTERNAL_ID: "@{acorn.externalID}"
 		NEON_API_KEY:      "secret://neon-creds/api_key"
 		PROJECT_NAME:      args.projectName
+		DB_NAME:           args.dbName
+		PROJECT_ID:        "secret://state/project_id"
 		CREATED_PROJECT:   "secret://state/created_project"
+		CREATED_DATABASE:  "secret://state/created_database"
 	}
 	events: ["delete"]
 }
@@ -94,7 +114,7 @@ localData: credInfo: """
         
     You will need to [create an account](https://neon.tech) 
 	
-	then follow
+	  then follow
 
-	[these instructions](https://neon.tech/docs/manage/api-keys) to create an API key.
+	  [these instructions](https://neon.tech/docs/manage/api-keys) to create an API key.
     """
