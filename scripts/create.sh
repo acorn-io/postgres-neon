@@ -2,63 +2,75 @@
 # set -eo pipefail
 echo "[create.sh]"
 
+# Couple of varibales to simplify development
+termination_log="/dev/termination-log"
+# termination_log="/tmp/termination-log"
+acorn_output="/run/secrets/output"
+# acorn_output="/tmp/run_secrets_output"
+
 # Make sure this script only replies to an Acorn creation event
 if [ "${ACORN_EVENT}" != "create" ]; then
    echo "ACORN_EVENT must be [create], currently is [${ACORN_EVENT}]"
    exit 0
 fi
 
-# Neon API URL
-BASE_URL="https://console.neon.tech/api/v2"
+# Keep track of project_id
+project_id=""
+
+# Used to identify project and database created in this script
+created_project=""
+created_database=""
 
 # Check if project with that name already exits
-res=$(curl -s "$BASE_URL/projects" \
- -H "Accept: application/json" \
- -H "Authorization: Bearer $NEON_API_KEY" | jq -r --arg project_name "$PROJECT_NAME" '
-  if .projects then
-    .projects[] | select(.name == $project_name)
-  else
-    empty
-  end
-')
+res=$(neonctl projects list -o json | jq -r --arg project_name "${PROJECT_NAME}" '.[] | select(.name == $project_name)')
 if [ "$res" != "" ]; then
-  echo "project ${PROJECT_NAME} already exists" | tee /dev/termination-log
-  exit 1
+  echo "project ${PROJECT_NAME} already exists" | tee ${termination_log}
+else
+  echo "project ${PROJECT_NAME} does not exist => will be created"
+  res=$(neonctl projects create --name ${PROJECT_NAME} --region-id ${REGION} -o json 2>&1)
+  if [ $? -ne 0 ]; then
+    echo "project ${PROJECT_NAME} cannot be created"
+    echo $res | tee ${termination_log}
+    exit 1
+  fi
+  echo "project ${PROJECT_NAME} created"
+  
+  # Get project identifier
+  project_id=$(neonctl projects list -o json | jq -r --arg project_name "${PROJECT_NAME}" '.[] | select(.name == $project_name) | .id')
+  echo "project identifier is [${project_id}]"
+
+  # Keep track of created project (this will be checked in the deletion step)
+  created_project=${project_id}
 fi 
-echo "project ${PROJECT_NAME} does not exist"
 
-# Create a project
-echo "about to create project $PROJECT_NAME"
-res=$(curl "$BASE_URL/projects" \
-  -H "Accept: application/json" \
-  -H "Authorization: Bearer $NEON_API_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{ 
-        "project": { 
-          "name": '\"${PROJECT_NAME}\"',
-          "region_id": '\"${REGION}\"',
-          "pg_version": '${DB_VERSION}'
-        }
-     }' | jq)
+# Check if database with that name already exits for that project
+res=$(neonctl databases list --project-id ${project_id} -o json | jq -r --arg database_name "$DB_NAME" '.[] | select(.name == $database_name)')
+if [ "$res" != "" ]; then
+  # echo "database ${DB_NAME} already exists" | tee /dev/termination-log
+  echo "database ${DB_NAME} already exists"
+else
+  echo "database ${DB_NAME} does not exist => will be created"
+  res=$(neonctl databases create --name ${DB_NAME} --project-id ${project_id} -o json 2>&1)
+  if [ $? -ne 0 ]; then
+    echo "database ${PROJECT_NAME} cannot be created"
+    echo $res | tee ${termination_log}
+    exit 1
+  fi
+  echo "database ${DB_NAME} created"
 
-# Make sure the project was created correctly
-if [ $? -ne 0 ]; then
-  echo $res | tee /dev/termination-log
-  exit 1
+  # Keep track of created database (this will be checked in the deletion step)
+  created_database=${DB_NAME}
 fi
 
-# Get project identifier
-project_id=$(echo $res | jq -r '.project.id')
-
 # Get connection information
-host=$(echo $res | jq -r '.connection_uris[0].connection_parameters.host')
-db=$(echo $res | jq -r '.connection_uris[0].connection_parameters.database')
-user=$(echo $res | jq -r '.connection_uris[0].connection_parameters.role')
-pass=$(echo $res | jq -r '.connection_uris[0].connection_parameters.password')
-
-# Extract proto and host from address returned
-connection_string="postgres://$user:$pass@$host/$db?sslmode=require"
-echo "connection string: $connection_string"
+echo "getting connection string for database ${DB_NAME}"
+conn=$(neonctl connection-string --database-name "${DB_NAME}" --extended -o json)
+connection_string=$(echo $conn | jq -r '.connection_string')
+host=$(echo $conn | jq -r '.host')
+db=$(echo $conn | jq -r '.database')
+user=$(echo $conn | jq -r '.role')
+pass=$(echo $conn | jq -r '.password')
+echo "connection string: [${connection_string}]"
 
 # Wait for db to be available
 while true; do
@@ -72,7 +84,7 @@ while true; do
     fi
 done
 
-cat > /run/secrets/output<<EOF
+cat > ${acorn_output}<<EOF
 services: neon: {
   address: "$host"
   secrets: ["user"]
@@ -90,7 +102,9 @@ secrets: {
   }
   state: {
     data: {
-      created_project: "$project_id"
+      project_id: "${project_id}"
+      created_project: "${created_project}"
+      created_database: "${created_database}"
     }
   }
 }
