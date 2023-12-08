@@ -2,11 +2,9 @@
 # set -eo pipefail
 echo "[create.sh]"
 
-# Couple of varibales to simplify development
+# Couple of variables to make local testing simpler
 termination_log="/dev/termination-log"
-# termination_log="/tmp/termination-log"
 acorn_output="/run/secrets/output"
-# acorn_output="/tmp/run_secrets_output"
 
 # Make sure this script only replies to an Acorn creation event
 if [ "${ACORN_EVENT}" != "create" ]; then
@@ -24,7 +22,7 @@ created_database=""
 # Check if project with that name already exits
 res=$(neonctl projects list -o json | jq -r --arg project_name "${PROJECT_NAME}" '.[] | select(.name == $project_name)')
 if [ "$res" != "" ]; then
-  echo "project ${PROJECT_NAME} already exists" | tee ${termination_log}
+  echo "project ${PROJECT_NAME} already exists"
 else
   echo "project ${PROJECT_NAME} does not exist => will be created"
   res=$(neonctl projects create --name ${PROJECT_NAME} --region-id ${REGION} -o json 2>&1)
