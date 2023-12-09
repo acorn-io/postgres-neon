@@ -7,8 +7,8 @@ termination_log="/dev/termination-log"
 acorn_output="/run/secrets/output"
 
 # Make sure this script only replies to an Acorn creation event
-if [ "${ACORN_EVENT}" != "create" ]; then
-   echo "ACORN_EVENT must be [create], currently is [${ACORN_EVENT}]"
+if [ "${ACORN_EVENT}" = "delete" ]; then
+   echo "ACORN_EVENT must be  [create, update], currently is [${ACORN_EVENT}]"
    exit 0
 fi
 

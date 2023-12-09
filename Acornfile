@@ -26,25 +26,8 @@ jobs: "create-db": {
 		DB_NAME:           args.dbName
 		REGION:            args.region
 	}
-	events: ["create"]
+	events: ["create", "update"]
 }
-
-//jobs: "update-db": {
-//	build: {
-//		context: "."
-//		buildArgs: {
-//			action: "update"
-//		}
-//	}
-//	env: {
-//		ACORN_EXTERNAL_ID: "@{acorn.externalID}"
-//		NEON_API_KEY:      "secret://neon-creds/api_key"
-//		PROJECT_NAME:      args.projectName
-//		DB_NAME:           args.dbName
-//		REGION:            args.region
-//	}
-//	events: ["update"]
-//}
 
 jobs: "delete-db": {
 	build: {
@@ -92,7 +75,7 @@ localData: info: """
 	## Usage
 
 	services: db: {
-		image: "ghcr.io/acorn-io/neon:v#.#-#"
+		image: "ghcr.io/acorn-io/postgres-neon:v#.#-#"
 	}
 
 	containers: app: {
@@ -110,11 +93,8 @@ localData: credInfo: """
     ## Neon Prostgres Setup Instructions
        	
     To use this service, you need to supply Neon credentials. 
-    We will need the *API Private key*
         
-    You will need to [create an account](https://neon.tech) 
-	
-	  then follow
+    You will need to [create an account](https://neon.tech) then to follow
 
 	  [these instructions](https://neon.tech/docs/manage/api-keys) to create an API key.
     """
