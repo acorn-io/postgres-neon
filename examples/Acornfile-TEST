@@ -1,12 +1,9 @@
 services: db: {
-	if args.dev {
-		build: {
-			context:   "../"
-			acornfile: "../Acornfile"
-		}
-	} else {
-		image: "ghcr.io/acorn-io/postgres-neon:v#-#"
-	}
+  image: "ghcr.io/acorn-io/postgres-neon:v#-#"
+  serviceArgs: {
+		projectName: "myproject"
+    dbName: "mydb"
+  }
 }
 
 containers: app: {
